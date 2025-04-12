@@ -1,6 +1,7 @@
 import pygame
-from config_game import screen
+from config_game import BG_SIZE
 
+screen = pygame.display.set_mode(BG_SIZE)
 class Text:
     texts = []
     def __init__(self, screen, cords, name, font=None, size=74, text="test text", color=(255, 255, 255)):
@@ -9,6 +10,7 @@ class Text:
         self.screen = screen
         self.name = name
         self.color = color
+        self.text = text
 
         self.x = cords[0]
         self.y = cords[1]
@@ -16,8 +18,15 @@ class Text:
         self.font = pygame.font.Font(font, size)
         self.surface = self.font.render(text, True, color)
 
-    def update_text(self, text):
-        self.surface = self.font.render(text, True, self.color)
+    def update_text(self, text=None, color=None):
+        if not text:
+            text = str(self.text)
+        if not color:
+            color = self.color
+
+        self.surface = self.font.render(text, True, color)
+
+
 
 
     def draw(self):

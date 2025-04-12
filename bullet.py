@@ -1,11 +1,13 @@
 import pygame
-
 from config_game import BG_SIZE
 from tank import Tank
 from block import Block
+
 class Bullet:
     bullets = []
     def __init__(self, screen, tank, side_tank, cords, size_tank, size=(20, 20), color=(255, 255, 255)):
+
+
         self.width = size[0]
         self.height = size[1]
 
@@ -23,7 +25,7 @@ class Bullet:
         self.side_tank = side_tank
 
         self.color = color
-        self.speed = 15
+        self.speed = 20
 
         self.screen = screen
 
@@ -51,15 +53,19 @@ class Bullet:
         self.rect.y += directions[self.side_tank][1]
         objects = Tank.tanks+Block.blocks
         for object in objects:
-            if object.type == "tank" and object.rect.colliderect(self.rect):
-                Tank.tanks.remove(object)
-                objects.remove(object)
-                Bullet.bullets.remove(self)
+            if object.type == "tank" and object.rect.colliderect(self.rect):# and not object is self.tank
+                #Tank.tanks.remove(object)
+                #objects.remove(object)
+                #Bullet.bullets.remove(self)
+                pass
             if object.type == "wall" and object.rect.colliderect(self.rect):
                 Bullet.bullets.remove(self)
 
             if object.type == "capture_zone" and self.rect.colliderect(object.rect):
                 object.collide()
+                self.tank.reward += 0
+                self.tank.flag_collide_bullet_zone = True
+                self.tank.bullet_reward_zone = self
                 #object.point_up(self.tank)
                 """self.tank.point += 1
                 self.tank.point_obj.score = self.tank.point
@@ -78,6 +84,7 @@ class Bullet:
             "up": (self.x + self.tank_width / 2, self.y - 5),
             "down": (self.x + self.tank_width / 2, self.y + self.tank_height + 5)
         }
+        #print(side)
 
         self.rect.x = cords[side][0]
         self.rect.y = cords[side][1]

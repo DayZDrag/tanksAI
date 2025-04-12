@@ -1,7 +1,7 @@
 import sys
 from random import choice
 
-import neat
+import neat_agent
 import pygame
 import os
 
