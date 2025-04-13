@@ -12,10 +12,14 @@ class QNetworkTorch(nn.Module):
         #self.fc2 = nn.Linear(hidden_1_size, hidden_2_size)
         self.fc3 = nn.Linear(hidden_1_size, output_size)
 
-    def save(self, meta, name="neiro"):
-        model_folder_path = './saves'
-        name = f"{name}_{meta}.pth"
+    def save(self, meta=None, name="model"):
+        model_folder_path = 'saves'
+        if not meta:
+            name = f"{name}.pth"
+        else:
+            name = f"{name}_{meta}.pth"
         file_name = os.path.join(model_folder_path, name)
+        print(file_name)
         torch.save(self.state_dict(), file_name)
 
     def forward(self, x):
@@ -55,7 +59,7 @@ class QTrainer:
             reward = torch.unsqueeze(reward, 0)
             done = (done,)
 
-        # 1: predicted Q values with current state
+
         pred = self.model(state)
 
         target = pred.clone()
@@ -66,15 +70,10 @@ class QTrainer:
 
             target[idx][torch.argmax(action[idx]).item()] = Q_new
 
-        # 2: Q_new = r + y * max(next_predicted Q value) -> only do this if not done
-        # pred.clone()
-        # preds[argmax(action)] = Q_new
+
         self.optimizer.zero_grad()
         loss = self.criterion(target, pred)
         loss.backward()
 
         self.optimizer.step()
-
-#agent = QLearningAgent()
-#agent.train_step(1.0, 2, 1.0, 0.5, False)
 

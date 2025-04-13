@@ -63,7 +63,7 @@ class Bullet:
 
             if object.type == "capture_zone" and self.rect.colliderect(object.rect):
                 object.collide()
-                self.tank.reward += 0
+                self.tank.reward += 100
                 self.tank.flag_collide_bullet_zone = True
                 self.tank.bullet_reward_zone = self
                 #object.point_up(self.tank)

@@ -1,3 +1,4 @@
+import os
 import sys
 
 import pygame
@@ -12,7 +13,7 @@ from config_game import bg_color, BG_SIZE, target_fps, ORANGE_COLOR, GREEN_COLOR
 from image_loader import image_loader
 from model_q_torch import QNetworkTorch, QTrainer
 #from plot import plot
-import plot
+#import plot
 from tank import Tank
 from text import Text
 #import os
@@ -28,17 +29,17 @@ LR = 0.001
 
 class Agent:
 
-    def __init__(self):
-        self.flag_rand_move = "None"
+    def __init__(self, model=QNetworkTorch(4, 10,  4)):
+
 
         self.n_games = 0
         self.epsilon = 0
         self.gamma = 0.9
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
-        self.model = QNetworkTorch(4, 10,  4)
+        self.model = model
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
-        self.flag_rand_lite_random = True
+        self.flag_training = True
 
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
@@ -65,7 +66,6 @@ class Agent:
             move = random.randint(0, 3)
             final_move[move] = 1
 
-            self.flag_rand_move = "рандом"
         else:
             state0 = torch.tensor(state, dtype=torch.float)
             #print(state0)
@@ -73,14 +73,12 @@ class Agent:
             move = torch.argmax(prediction).item()
             final_move[move] = 1
 
-            self.flag_rand_move = "AI"
-
         return final_move
 
     def get_action_lite_random(self, state):
         final_move = [0] * 5
 
-        if random.randint(1, 10) == self.flag_rand_lite_random:#self.flag_rand_stachiochastic#1
+        if random.randint(1, 10) == self.flag_training:#self.flag_rand_stachiochastic#1
             move = random.randint(0, 3)
             final_move[move] = 1
         else:
@@ -101,7 +99,7 @@ class Agent:
         probs = F.softmax(prediction / temperature, dim=0)
         move = torch.multinomial(probs, num_samples=1).item()
         final_move[move] = 1
-        print(probs)
+        #print(probs)
 
         return final_move
 
@@ -119,7 +117,7 @@ def train():
 
 
     agent_tank = Agent()
-    agent_gun = Agent()
+    #agent_gun = Agent()
 
     tank = Tank(screen, "neiro", (0, 1, 2, 3, 4), size=6,
             image=image_loader.tanks_images[1], cords=(BG_SIZE[0]*0.5, BG_SIZE[1]*0.5)
@@ -152,18 +150,24 @@ def train():
                    size=50)
     #rm - random move
 
-    flag_rm_text_T = Text(screen, cords=(BG_SIZE[0] * 0.05, BG_SIZE[1] * 0.05), name="flag_rm_text",
-                     text=f"тип действия:",
+    flag_rm_text_T = Text(screen, cords=(BG_SIZE[0] * 0.05, BG_SIZE[1] * 0.1), name="flag_rm_text",
+                     text=f"режим:",
                      size=50)
 
-    flag_rm_T = Text(screen, cords=(BG_SIZE[0] * 0.05, BG_SIZE[1] * 0.1), name="flag_rm", text=agent_tank.flag_rand_move,
-                   size=50)
-    flag_rm_T.update_text(text="тренировка", color=GREEN_COLOR)
+    flag_rm_T = Text(screen, cords=(BG_SIZE[0] * 0.05, BG_SIZE[1] * 0.15), name="flag_rm", text=str(agent_tank.flag_training),
+                     size=50)
+    flag_rm_T.update_text(text="тренировка", color=GREEN_COLOR) #тренировка/AI
+
+    fps_T = Text(screen, cords=(BG_SIZE[0] * 0.05, BG_SIZE[1] * 0.05), name="fps",
+                     text="fps: 0",
+                     size=50)
 
     reward_text_T = Text(screen, cords=(BG_SIZE[0] * 0.8, BG_SIZE[1] * 0.1), name="flag_rm", text="награда:", size=50)
 
     reward_T = Text(screen, cords=(BG_SIZE[0] * 0.93, BG_SIZE[1] * 0.1), name="flag_rm", text="0", size=50)
 
+
+    #bufer_train_bullet_memory = []
     bufer_train_bullet = []
     while True:
 
@@ -177,12 +181,28 @@ def train():
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.KEYUP:
-                if event.key == pygame.K_x and agent_tank.flag_rand_lite_random: # and False
-                    agent_tank.flag_rand_lite_random = False
-                    flag_rm_T.update_text(text="AI", color=RED_COLOR)
-                elif event.key == pygame.K_x and not agent_tank.flag_rand_lite_random:
-                    agent_tank.flag_rand_lite_random = True
+                if event.key == pygame.K_x and agent_tank.flag_training: # and False
+                    agent_tank.flag_training = False
+                    flag_rm_T.update_text(text="Эксплуатация", color=RED_COLOR)
+                elif event.key == pygame.K_x and not agent_tank.flag_training:
+                    agent_tank.flag_training = True
                     flag_rm_T.update_text(text="тренировка", color=GREEN_COLOR)
+                elif event.key == pygame.K_s:
+                    agent_tank.model.save() #f"{local_timer_sec}"
+                elif event.key == pygame.K_l:
+                    model = QNetworkTorch(4, 10, 4)
+                    model.load_state_dict(torch.load(os.path.join("saves", 'model.pth')))
+                    #model.eval()
+                    agent_tank = Agent(model)
+                    local_timer_sec = 0
+                    tank.rect.x = BG_SIZE[0]*0.5
+                    tank.rect.y = BG_SIZE[1]*0.5
+                    agent_tank.flag_training = False
+                    flag_rm_T.update_text(text="Эксплуатация", color=RED_COLOR)
+
+
+
+
 
         '''keys_user = pygame.key.get_pressed()
         if keys_user[pygame.K_x] and agent_tank.flag_rand_stachiochastic:
@@ -237,12 +257,11 @@ def train():
             reward+=10'''
         '''elif difference_distance < 0:
             reward -= 1'''
-        reward += max(0, difference_distance)
-        reward += -0.1
+        reward += max(-0.1, difference_distance)
         #reward = reward/1.5
         #reward += no_revers_reward
         #print(f"{reward=}")
-        points_in_second = tank.score / global_timer_sec
+        #points_in_second = tank.score / global_timer_sec
         #print(f"{points_in_second=}")
         if reward > 0:
             reward_T.update_text(f"{reward:.1f}", color=GREEN_COLOR)
@@ -259,11 +278,11 @@ def train():
 
         score_T.update_text(f"счёт: {tank.score}")
 
-        if agent_tank.flag_rand_move == "рандом":
-            flag_rm_T.update_text(text=agent_tank.flag_rand_move, color=RED_COLOR)
+        '''if agent_tank.flag_learning_ai == "рандом":
+            flag_rm_T.update_text(text=agent_tank.flag_learning_ai, color=RED_COLOR)
 
-        elif agent_tank.flag_rand_move == "AI":
-            flag_rm_T.update_text(text=agent_tank.flag_rand_move, color=GREEN_COLOR)
+        elif agent_tank.flag_learning_ai == "Эксплуатация":
+            flag_rm_T.update_text(text=agent_tank.flag_learning_ai, color=GREEN_COLOR)'''
 
 
 
@@ -283,20 +302,21 @@ def train():
 
         #print(f"len: {len(bufer_train_bullet)}")
 
-        '''if agent_tank.flag_rand_lite_random:
+        '''if agent_tank.flag_training:
             tank.score -= 1'''
 
-        # тренировка короткой памяти
 
 
-        if agent_tank.flag_rand_lite_random:
+
+        if agent_tank.flag_training:
 
             '''if keys[4]:
-                reward += -100
+                reward += -1
                 bufer_train_bullet.append(
                     ([state_old, keys, reward, state_new, done], tank.bullet)
                                           )'''
-            print(keys)
+                #print(state_old, keys, reward, state_new, done)
+            # тренировка короткой памяти
             agent_tank.train_short_memory(state_old, keys, reward, state_new, done)
 
         if tank.flag_collide_bullet_zone:
@@ -306,16 +326,21 @@ def train():
                     state_bullet[0][2] = tank.reward
                     state_old, keys, reward, state_new, done = state_bullet[0]
                     agent_tank.train_short_memory(state_old, keys, reward, state_new, done)
-                    print(f"tank.bullet {tank.bullet}")
-                    print(state_bullet)
+                    agent_tank.remember(state_old, keys, reward, state_new, done)
+                    #bufer_train_bullet_memory.append(state_bullet[0])
+                    #print(f"tank.bullet {tank.bullet}")
+                    #print(state_bullet)
                     break
             bufer_train_bullet = []
 
+        '''if global_timer_sec % 30 == 0:
+            agent_tank.train_long_memory()'''
 
 
 
 
-            agent_tank.remember(state_old, keys, reward, state_new, done)
+
+
 
 
 
@@ -324,7 +349,7 @@ def train():
 
             #timer_T.update_text(f"таймер: {timer_alive}")
             #timer_alive -= 1
-            timer_T.update_text(f"таймер: {global_timer_sec}")
+            timer_T.update_text(f"время: {local_timer_sec}")
             timer_reward -= 1
 
 
@@ -346,14 +371,23 @@ def train():
         flag_rm_T.draw()
         reward_T.draw()
         reward_text_T.draw()
+        fps_T.draw()
 
         tank.reward = 0
 
         pygame.display.flip()
         #clock.tick(target_fps)
 
-
-
+        #tank.score = 0
+        if not agent_tank.flag_training:
+            clock.tick(target_fps)
+        else:
+            clock.tick()
+        real_time_fps = clock.get_fps()
+        fps_T.update_text(f"fps: {real_time_fps:.1f}")
+        # clock.tick(300)
+        # clock.tick()
+        # print(f"{real_time_fps=}")
 
         if done:
             # train long memory, plot result
@@ -375,7 +409,7 @@ def train():
 
             timer_alive = CONST_TA
             #timer_T.update_text(f"таймер: {timer_alive}")
-            timer_T.update_text(f"таймер: 0")
+            timer_T.update_text(f"время: 0")
             n_game_T.update_text(f"раунд: {agent_tank.n_games}")
 
             if record_tank < tank.score:
@@ -387,30 +421,18 @@ def train():
                 agent_tank.model.save(f"round_{agent_tank.n_games}")'''
 
 
-
-
             '''if score > record:
                 record = score
                 agent_tank.model.save()
 
             print('Game', agent_tank.n_games, 'Score', score, 'Record:', record)'''
 
-            plot_scores.append(tank.score)
+            '''plot_scores.append(tank.score)
             total_score += tank.score
             mean_score = total_score / agent_tank.n_games
             plot_mean_scores.append(mean_score)
-            plot.plot(plot_scores, plot_mean_scores)
+            plot.plot(plot_scores, plot_mean_scores)'''
 
-            tank.score = 0
-        if not agent_tank.flag_rand_lite_random:
-            clock.tick()
-        else:
-            #clock.tick()
-            pass
-        real_time_fps = clock.get_fps()
-        #clock.tick(300)
-        #clock.tick()
-        #print(f"{real_time_fps=}")
 
 
 if __name__ == '__main__':

@@ -158,10 +158,11 @@ class Tank:
 
 
     def get_data(self, capture_zone):
-        from bullet import Bullet
+        import torch.nn.functional as F
+        #from bullet import Bullet
         #return int(self.distance / 30)
         #print(bool(len(Bullet.bullets)))
-        return  [self.rect.center[0]/1200, self.rect.center[1]/800, capture_zone.rect.center[0]/1200, capture_zone.rect.center[1]/800] #, self.sides[self.side_tank]
+        return [self.rect.center[0]/1200, self.rect.center[1]/800, capture_zone.rect.center[0]/1200, capture_zone.rect.center[1]/800] #, self.sides[self.side_tank]
                                                 #[self.side_obj, self.distance]
                                                 #[self.rect.center[0], self.rect.center[1], capture_zone.rect.center[0], capture_zone.rect.center[1]]
                                                 #[self.rect.center[0]/1200, self.rect.center[1]/800, capture_zone.rect.center[0]/1200, capture_zone.rect.center[1]/800]
