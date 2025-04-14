@@ -126,6 +126,7 @@ def train():
     zone = CaptureZone(screen, cords=(BG_SIZE[0]*0.5, BG_SIZE[1]*0.1))
 
     local_timer_sec = 0
+    time_game = 0
 
     min_distance = 1000
     max_distance = 0
@@ -169,7 +170,9 @@ def train():
 
     #bufer_train_bullet_memory = []
     bufer_train_bullet = []
+    start = False
     while True:
+
 
 
 
@@ -181,6 +184,9 @@ def train():
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_SPACE:
+                    start = True
+
                 if event.key == pygame.K_x and agent_tank.flag_training: # and False
                     agent_tank.flag_training = False
                     flag_rm_T.update_text(text="Эксплуатация", color=RED_COLOR)
@@ -194,11 +200,26 @@ def train():
                     model.load_state_dict(torch.load(os.path.join("saves", 'model.pth')))
                     #model.eval()
                     agent_tank = Agent(model)
-                    local_timer_sec = 0
+                    time_game = 0
+                    tank.score = 0
                     tank.rect.x = BG_SIZE[0]*0.5
                     tank.rect.y = BG_SIZE[1]*0.5
                     agent_tank.flag_training = False
+                    timer_T.update_text(f"время: {time_game}")
                     flag_rm_T.update_text(text="Эксплуатация", color=RED_COLOR)
+                    score_T.update_text(f"счёт: {tank.score}")
+                elif event.key == pygame.K_r:
+                    agent_tank = Agent()
+                    time_game = 0
+                    tank.score = 0
+                    tank.rect.x = BG_SIZE[0] * 0.5
+                    tank.rect.y = BG_SIZE[1] * 0.5
+                    agent_tank.flag_training = True
+                    timer_T.update_text(f"время: {time_game}")
+                    flag_rm_T.update_text(text="тренировка", color=GREEN_COLOR)
+                    score_T.update_text(f"счёт: {tank.score}")
+        if not start:
+            continue
 
 
 
@@ -346,10 +367,11 @@ def train():
 
         if local_timer_sec != global_timer_sec:
             local_timer_sec = global_timer_sec
+            time_game += 1
 
             #timer_T.update_text(f"таймер: {timer_alive}")
             #timer_alive -= 1
-            timer_T.update_text(f"время: {local_timer_sec}")
+            timer_T.update_text(f"время: {time_game}")
             timer_reward -= 1
 
 

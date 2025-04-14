@@ -91,6 +91,7 @@ def game():
 
         for block in Block.blocks:
             block.draw()
+            #pass
 
         if local_timer_sec != global_timer_sec:
             local_timer_sec = global_timer_sec

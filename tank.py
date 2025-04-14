@@ -194,15 +194,13 @@ class Tank:
             #print(self.tick_gun)
 
 
-        if keys[self.keySHOT] and  True:#self.flag_bullet_spawn #self.tick_gun%10==0
+        if keys[self.keySHOT] and self.flag_bullet_spawn:#self.flag_bullet_spawn #self.tick_gun%10==0
             self.gun()
             self.flag_bullet_spawn = True
             self.reward += -1
             #self.tick_gun += 1
-
-        elif not keys[self.keySHOT] and not self.flag_bullet_spawn:
-            self.flag_bullet_spawn = True
-            self.tick_gun = 0
+        '''elif not keys[self.keySHOT] and not self.flag_bullet_spawn:
+            self.flag_bullet_spawn = True'''
 
         # self.gun()
         self.rotate(side)
