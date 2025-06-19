@@ -1,5 +1,6 @@
 import os
 import sys
+from pprint import pprint
 
 import pygame
 import torch
@@ -7,17 +8,22 @@ import random
 #import numpy as np
 from collections import deque
 
+from sympy.codegen import Print
+
 from block import CaptureZone
 from bullet import Bullet
-from config_game import bg_color, BG_SIZE, target_fps, ORANGE_COLOR, GREEN_COLOR, RED_COLOR #screen, clock
+from config_game import bg_color, BG_SIZE, target_fps, ORANGE_COLOR, GREEN_COLOR, RED_COLOR, TIME_FIT  # screen, clock
 from image_loader import image_loader
 from model_q_torch import QNetworkTorch, QTrainer
 #from plot import plot
 #import plot
 from tank import Tank
-from text import Text
+from text import Text, Point
 #import os
 import torch.nn.functional as F
+
+from tools import ocurat_print
+
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
@@ -29,7 +35,7 @@ LR = 0.001
 
 class Agent:
 
-    def __init__(self, model=QNetworkTorch(4, 10,  4)):
+    def __init__(self, model):
 
 
         self.n_games = 0
@@ -49,9 +55,13 @@ class Agent:
             mini_sample = random.sample(self.memory, BATCH_SIZE)
         else:
             mini_sample = self.memory
+        print(f"{mini_sample=}")
 
-        states, actions, rewards, next_states, dones = zip(*mini_sample)
-        self.trainer.train_step(states, actions, rewards, next_states, dones)
+        try:
+            states, actions, rewards, next_states, dones = zip(*mini_sample)
+            self.trainer.train_step(states, actions, rewards, next_states, dones)
+        except:
+            print("ни одного попадания")
 
 
     def train_short_memory(self, state, action, reward, next_state, done):
@@ -90,16 +100,23 @@ class Agent:
 
         return final_move
     def get_action_stahiohastic(self, state):
-        final_move = [0] * 5
+        final_move = [0] * self.model.fc3.out_features
 
         temperature = 1
 
+        #print("=======================")
+        #print(f"object: {self.__class__.__name__}")
         state0 = torch.tensor(state, dtype=torch.float)
+        #print(f"{state=}")
         prediction = self.model(state0)
+        #print(f"{prediction=}")
         probs = F.softmax(prediction / temperature, dim=0)
+        #print(f"{probs=}")
         move = torch.multinomial(probs, num_samples=1).item()
+        #print(f"{move=}")
         final_move[move] = 1
         #print(probs)
+        #print("=======================")
 
         return final_move
 
@@ -116,8 +133,9 @@ def train():
     done = False
 
 
-    agent_tank = Agent()
-    #agent_gun = Agent()
+    agent_tank = Agent(QNetworkTorch(1, 100, 100,  4))
+    #agent_gun = Agent(QNetworkTorch(4, 100, 100,  2))
+    reward_gun = 0
 
     tank = Tank(screen, "neiro", (0, 1, 2, 3, 4), size=6,
             image=image_loader.tanks_images[1], cords=(BG_SIZE[0]*0.5, BG_SIZE[1]*0.5)
@@ -167,13 +185,23 @@ def train():
 
     reward_T = Text(screen, cords=(BG_SIZE[0] * 0.93, BG_SIZE[1] * 0.1), name="flag_rm", text="0", size=50)
 
+    '''sum_reward_move = Text(screen, cords=(BG_SIZE[0] * 0.93, BG_SIZE[1] * 0.1), name="sum_reward_move", text="0", size=50)
+    sum_reward_move_T = Text(screen, cords=(BG_SIZE[0] * 0.93, BG_SIZE[1] * 0.1), name="sum_reward_move", text="0", size=50)
+    sum_reward_move = Point(screen, name=)
+    
+    sum_reward_gun
+    sum_reward_gun_T'''
+
 
     #bufer_train_bullet_memory = []
     bufer_train_bullet = []
-    start = False
+    flag_train_long_memory = True
+    start = True
+    sum_reward_move = 0
+    sum_reward_gun = 0
+    count_gun = 0
+    count_move = 0
     while True:
-
-
 
 
         ticks = pygame.time.get_ticks()
@@ -240,23 +268,45 @@ def train():
             bullet.draw()
 
         state_old = tank.get_data(zone)
+        #print(state_old)
+        #print(state_old)
         #print(tank.bullet)
-        #print(f"{state_old=}")
+
         old_distance = tank.compute_distance(zone)
+        #print(state_old)
+        #print("state_old[0:4]", state_old[0:4])
 
 
         #keys = agent_tank.get_action(state_old)
-        keys = agent_tank.get_action_stahiohastic(state_old)
+        #@ocurat_print()
+        keys_tank = agent_tank.get_action_stahiohastic(state_old[0:1])
+        #keys_gun = agent_gun.get_action_stahiohastic(state_old)
+        #print(f"{keys_tank=}")
+        #print(f"{keys_gun=}")
+        keys_tank.append(0)
+        keys = keys_tank
 
-        tank.update(keys)
-        keys.pop()
-        #print(f"reward: {tank.reward}")
-        reward = tank.reward
+
+        #keys.append(keys_gun[1])
+        #print(f"{keys=}")
+        #print(f"{keys_gun=}")
+        #print(f"{keys=}")
+
+
+
+        #tank.update(keys)
+        tank.update(keys_tank)
+        #keys.pop()
+        #print(f"reward_tank: {tank.reward_tank}")
+        reward_tank = tank.reward
+        #print(reward_tank)
         #no_revers_reward = local_timer_sec-CONST_TA
         if tank.flag_timer_reward:
             tank.flag_timer_reward = False
             timer_reward = CONST_TR
             timer_alive = CONST_TA
+
+
 
 
 
@@ -268,28 +318,34 @@ def train():
 
         '''if new_distance < min_distance:
             min_distance = new_distance
-            reward += 10'''
+            reward_tank += 10'''
 
         '''if new_distance > min_distance:
-            reward -= 0.1'''
+            reward_tank -= 0.1'''
         '''if 2 > difference_distance > 0:
             difference_distance = 0'''
         '''if difference_distance > 0:
-            reward+=10'''
+            reward_tank+=10'''
         '''elif difference_distance < 0:
-            reward -= 1'''
-        reward += max(-0.1, difference_distance)
-        #reward = reward/1.5
-        #reward += no_revers_reward
-        #print(f"{reward=}")
+            reward_tank -= 1'''
+        reward_tank += max(-0.1, difference_distance)
+        count_move += 1
+        sum_reward_move += reward_tank
+        #reward_tank += min(0.1, difference_distance)
+        #reward_tank = reward_tank/1.5
+        #reward_tank += no_revers_reward
+        #print(f"{reward_tank=}")
         #points_in_second = tank.score / global_timer_sec
         #print(f"{points_in_second=}")
-        if reward > 0:
-            reward_T.update_text(f"{reward:.1f}", color=GREEN_COLOR)
-        elif reward < 0:
-            reward_T.update_text(f"{reward:.1f}", color=RED_COLOR)
+
+
+        #print(f"{tank.compute_distance(zone)}")
+        if reward_tank > 0:
+            reward_T.update_text(f"{reward_tank:.1f}", color=GREEN_COLOR)
+        elif reward_tank < 0:
+            reward_T.update_text(f"{reward_tank:.1f}", color=RED_COLOR)
         else:
-            reward_T.update_text(f"{reward:.1f}", color=RED_COLOR)
+            reward_T.update_text(f"{reward_tank:.1f}", color=RED_COLOR)
         #print(f"{no_revers_reward=}")
         #print(f"{difference_distance=}")
         #print(f"{min_distance=}")
@@ -312,7 +368,7 @@ def train():
             tank.is_alive = True
 
         # perform move and get new state
-        #reward, done = game.play_step(final_move)
+        #reward_tank, done = game.play_step(final_move)
         #print(frame_iteration)
 
 
@@ -329,33 +385,84 @@ def train():
 
 
 
+
+
         if agent_tank.flag_training:
+            state_new_gun = state_old[0:1]
+            state_new_gun.extend(state_new[1:])
+            reward_gun = 0
+            if not state_old[-2]:
+                reward_gun = 0.01
 
-            '''if keys[4]:
-                reward += -1
+            #print(f"{state_old=}")
+            #print(f"{state_new=}")
+            #print(f"{state_new_gun=}")
+
+
+
+            if keys[4]:
+
+
+                #reward_tank = 0
+                if state_old[-2]:
+                    reward_gun = -10
+                    #print(f"{state_old=}")
+                    #print(f"{reward_gun}")
+                else:
+                    reward_gun = -5
+                    #print(reward_gun)
+
+                sum_reward_gun += reward_gun
+                state_new[-1] = 1
+                state_new_gun = state_old[0:1]
+                state_new_gun.extend(state_new[1:])
+                #print(f"{state_old=}")
+                #print(f"{state_new_gun=}")
+
                 bufer_train_bullet.append(
-                    ([state_old, keys, reward, state_new, done], tank.bullet)
-                                          )'''
-                #print(state_old, keys, reward, state_new, done)
+                    ([state_old, keys_gun, 100, state_new_gun, done], tank.bullet) #max(1, min(1200, tank.compute_distance(zone) - 600+600)/2)
+                                          )
+                #print(state_old, keys, reward_tank, state_new, done)
             # тренировка короткой памяти
-            agent_tank.train_short_memory(state_old, keys, reward, state_new, done)
+            #print(state_new_gun)
+            agent_tank.train_short_memory(state_old[0:1], keys_tank, reward_tank, state_new[0:1], done)
+            #agent_gun.train_short_memory(state_old, keys_gun, reward_gun, state_new_gun, done)
 
+        #print(reward_tank)
+
+        #print(f"len={len(bufer_train_bullet)}")
         if tank.flag_collide_bullet_zone:
             tank.flag_collide_bullet_zone = False
             for state_bullet in bufer_train_bullet:
                 if state_bullet[1] is tank.bullet:
-                    state_bullet[0][2] = tank.reward
-                    state_old, keys, reward, state_new, done = state_bullet[0]
-                    agent_tank.train_short_memory(state_old, keys, reward, state_new, done)
-                    agent_tank.remember(state_old, keys, reward, state_new, done)
+                    #state_bullet[0][2] = tank.reward_tank
+                    state_old, keys_gun, reward_gun, state_new, done = state_bullet[0]
+                    #agent_gun.train_short_memory(state_old, keys_gun, reward_tank, state_new, done)
+                    #agent_gun.remember(state_old, keys_gun, reward_gun, state_new, done)
+                    #print(f"reward_gun bullet distance: {reward_gun}")
+                    sum_reward_gun += reward_gun
+                    count_gun += 1
                     #bufer_train_bullet_memory.append(state_bullet[0])
                     #print(f"tank.bullet {tank.bullet}")
                     #print(state_bullet)
+                    #print("======================")
+                    #print(f"{state_old=}")
+                    #print(f"{state_new=}")
+                    #print(f"{keys_gun=}")
+                    #print(f"{keys=}")
+                    #print(f"{reward_gun=}")
+                    #print("======================")
                     break
             bufer_train_bullet = []
 
-        '''if global_timer_sec % 30 == 0:
-            agent_tank.train_long_memory()'''
+        if time_game % 2 == 0 and time_game and flag_train_long_memory and False:
+            #agent_gun.train_long_memory()
+            flag_train_long_memory = False
+            print(f"{count_move=}")
+            print(f"{count_gun=}")
+
+        #print(f"{sum_reward_move=}")
+        #print(f"{sum_reward_gun=}")
 
 
 
@@ -372,7 +479,8 @@ def train():
             #timer_T.update_text(f"таймер: {timer_alive}")
             #timer_alive -= 1
             timer_T.update_text(f"время: {time_game}")
-            timer_reward -= 1
+            timer_reward -= TIME_FIT
+            flag_train_long_memory = True
 
 
             #print(local_timer_sec)
@@ -409,7 +517,7 @@ def train():
         fps_T.update_text(f"fps: {real_time_fps:.1f}")
         # clock.tick(300)
         # clock.tick()
-        # print(f"{real_time_fps=}")
+        #print(f"{real_time_fps=}")
 
         if done:
             # train long memory, plot result

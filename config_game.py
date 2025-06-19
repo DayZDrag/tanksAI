@@ -12,7 +12,7 @@ GREEN_COLOR = (63, 255, 82)
 CAPTURE_ZONE_FIT = 0
 DEATH_FIT = -5
 TIME_FIT = 0
-
+CAPTURE_BULLET_FIT = 0
 #pygame
 BG_SIZE = (1200, 800)
 #screen = pygame.display.set_mode(BG_SIZE)

@@ -1,7 +1,7 @@
 import pygame
 from config_game import BG_SIZE
 
-screen = pygame.display.set_mode(BG_SIZE)
+#screen = pygame.display.set_mode(BG_SIZE)
 class Text:
     texts = []
     def __init__(self, screen, cords, name, font=None, size=74, text="test text", color=(255, 255, 255)):
@@ -34,7 +34,7 @@ class Text:
 
 class Point:
     points = []
-    def __init__(self, name, text, cords, score=0):
+    def __init__(self, screen, name, text, cords, score=0):
         Point.points.append(self)
 
         self.name = name

@@ -158,17 +158,19 @@ class Tank:
 
 
     def get_data(self, capture_zone):
-        import torch.nn.functional as F
-        #from bullet import Bullet
+        #import torch.nn.functional as F
+        from bullet import Bullet
         #return int(self.distance / 30)
         #print(bool(len(Bullet.bullets)))
-        return [self.rect.center[0]/1200, self.rect.center[1]/800, capture_zone.rect.center[0]/1200, capture_zone.rect.center[1]/800] #, self.sides[self.side_tank]
-                                                #[self.side_obj, self.distance]
+        return  [self.side_obj / 180 , self.sides[self.side_tank]/270, bool(Bullet.bullets), 0]#, self.sides[self.side_tank]
                                                 #[self.rect.center[0], self.rect.center[1], capture_zone.rect.center[0], capture_zone.rect.center[1]]
                                                 #[self.rect.center[0]/1200, self.rect.center[1]/800, capture_zone.rect.center[0]/1200, capture_zone.rect.center[1]/800]
-                                                #[self.rect.center[0], self.rect.center[1], capture_zone.rect.center[0], capture_zone.rect.center[1]]#[self.side_obj/38, self.distance/120]
+                                                #[self.rect.center[0], self.rect.center[1], capture_zone.rect.center[0], capture_zone.rect.center[1]]
                                                 #[self.side_obj, self.distance],
                                                 #[self.side_obj, min(1000, self.distance)]
+                                                #[self.side_obj / 180, self.sides[self.side_tank]/270,  min(1200, self.distance) / 1200]
+                                                #[self.side_obj / 180,  min(1200, self.distance) / 1200,  self.side_tank=="up",  self.side_tank=="down",  self.side_tank=="left",  self.side_tank=="right"]
+
 
     def update(self, keys):
 
@@ -197,7 +199,6 @@ class Tank:
         if keys[self.keySHOT] and self.flag_bullet_spawn:#self.flag_bullet_spawn #self.tick_gun%10==0
             self.gun()
             self.flag_bullet_spawn = True
-            self.reward += -1
             #self.tick_gun += 1
         '''elif not keys[self.keySHOT] and not self.flag_bullet_spawn:
             self.flag_bullet_spawn = True'''
@@ -215,7 +216,7 @@ class Tank:
 
             if object.type == "tank" and ((self.rect.x+self.width > BG_SIZE[0] or self.rect.x < 0) or (self.rect.y < 0 or self.rect.y+self.height > BG_SIZE[1])):
                 #self.rect.x, self.rect.y = bg_size[0]-self.rect.x, bg_size[1]-self.rect.y
-                #self.rect.x, self.rect.y = oldX, oldY
+                self.rect.x, self.rect.y = oldX, oldY
                 self.reward += DEATH_FIT
                 #self.is_alive = False
                 #self.rect.x, self.rect.y = -self.speed, -self.speed

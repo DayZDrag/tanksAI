@@ -6,10 +6,10 @@ import torch.nn.functional as F
 import os
 
 class QNetworkTorch(nn.Module):
-    def __init__(self, input_size=1, hidden_1_size=3, output_size=4):
+    def __init__(self, input_size=1, hidden_1_size=3, hidden_2_size=3, output_size=4):
         super(QNetworkTorch, self).__init__()
         self.fc1 = nn.Linear(input_size, hidden_1_size)
-        #self.fc2 = nn.Linear(hidden_1_size, hidden_2_size)
+        self.fc2 = nn.Linear(hidden_1_size, hidden_2_size)
         self.fc3 = nn.Linear(hidden_1_size, output_size)
 
     def save(self, meta=None, name="model"):
@@ -25,7 +25,7 @@ class QNetworkTorch(nn.Module):
     def forward(self, x):
         #x = self.relu(self.fc1(x))
         x = F.relu(self.fc1(x))
-        #x = F.relu(self.fc2(x))
+        x = F.relu(self.fc2(x))
         #print(x)
         #x = self.sigmoid(self.fc2(x))
         l = self.fc3(x)
@@ -61,8 +61,11 @@ class QTrainer:
 
 
         pred = self.model(state)
+        #print(done)
+        #print(len(done))
 
         target = pred.clone()
+        #print(pred)
         for idx in range(len(done)):
             Q_new = reward[idx]
             if not done[idx]:

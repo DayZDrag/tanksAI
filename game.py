@@ -42,6 +42,7 @@ def game():
         global_timer_sec = ticks // 1000
 
         #print(tank_1.bullet)
+        p
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -67,6 +68,7 @@ def game():
                      )
 
         old_distance = tank_1.compute_distance(zone)
+        #print([tank_1.side_obj, tank_1.distance])
 
 
 
@@ -95,7 +97,7 @@ def game():
 
         if local_timer_sec != global_timer_sec:
             local_timer_sec = global_timer_sec
-            print(local_timer_sec)
+            #print(local_timer_sec)
 
             '''timer_T.update_text(f"таймер: {timer_alive}")
             timer_alive -= 1

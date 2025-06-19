@@ -1,5 +1,5 @@
 import pygame
-from config_game import BG_SIZE
+from config_game import BG_SIZE, CAPTURE_BULLET_FIT
 from tank import Tank
 from block import Block
 
@@ -63,9 +63,10 @@ class Bullet:
 
             if object.type == "capture_zone" and self.rect.colliderect(object.rect):
                 object.collide()
-                self.tank.reward += 100
+                self.tank.reward += CAPTURE_BULLET_FIT
                 self.tank.flag_collide_bullet_zone = True
                 self.tank.bullet_reward_zone = self
+                self.tank.score += 1
                 #object.point_up(self.tank)
                 """self.tank.point += 1
                 self.tank.point_obj.score = self.tank.point
