@@ -59,7 +59,8 @@ class Bullet:
                 #Bullet.bullets.remove(self)
                 pass
             if object.type == "wall" and object.rect.colliderect(self.rect):
-                Bullet.bullets.remove(self)
+                if self in Bullet.bullets:
+                    Bullet.bullets.remove(self)
 
             if object.type == "capture_zone" and self.rect.colliderect(object.rect):
                 object.collide()

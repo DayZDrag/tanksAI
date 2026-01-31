@@ -1,0 +1,17 @@
+experiment:
+  experiment: "lidar_sensor_test_199"
+
+  name_load_model: "model"
+  path_run: 1
+  flag_load_latest_model: true
+  flag_load_model: false
+
+  flag_experiment_save: false
+  flag_draw: true
+
+  environment:
+    count_zones: 1
+
+  train:
+    save_model_step: 250
+    episode_step: 25

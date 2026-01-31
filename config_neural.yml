@@ -1,0 +1,79 @@
+agent:
+    max_memory: 100_000
+    batch_size: 32
+    lr: 0.0001
+    gamma: 0.99
+
+    type_action: get_action_epsilon
+
+    # типы действий
+
+    get_action:
+
+    get_action_random:
+        K_len_learn: 1
+        proc_rand: 100
+
+    get_action_lite_random:
+        proc_rand: 15
+
+    get_action_stahiohastic:
+        temperature: 1
+
+    get_action_epsilon:
+        epsilon_init: 1
+        epsilon_decay: 0.99_99_87
+        epsilon_min: 0.05
+
+    const:
+        train_target_step: 16
+        action_step_train: 1000
+        train_long_memory: 32
+
+    flags:
+        train_long_memory: true
+        train_short_memory: false
+        train_gun: true
+
+    model:
+        size_input: 96
+        size_hidden: 250
+        size_output: 4
+        enable_dueling_dqn: false
+        enable_double_dqn: false
+        noise_bias: false
+
+    fitness:
+        capture_zone: 0
+        death: 0
+        time: 0
+        capture_bullet: 1
+        step: -0.0001
+        approach:
+            activate: false
+            k_size_reward: 10_000
+            min_reward: -1
+        gun: -0.01
+
+    input_type: grid_sensor
+
+    # типы входов
+
+    lidar:
+        mirrored: true
+        rotate: false
+        level: 12
+        distance: 1325
+        start_angle: 90
+
+    nearest_target_value:
+        type: two_points
+
+        two_points:
+        angle_and_distance:
+
+    grid_sensor:
+        size_cell: 100
+        width_grid: 1200
+        height_grid: 800
+

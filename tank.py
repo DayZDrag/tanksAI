@@ -1,17 +1,24 @@
 import math
 
+from icecream import ic
+#from pygments.styles.rainbow_dash import GREEN
+
 from image_loader import image_loader
 #from random import random, randint
 import pygame
 import os
 #from block import Block
 from config.config import Config
-from config_game import DEATH_FIT, CAPTURE_ZONE_FIT, BG_SIZE
+from config_game import DEATH_FIT, CAPTURE_ZONE_FIT, BG_SIZE, GREEN_COLOR, debug, DARKENED_GREEN_COLOR
 #from text import Text
-from block import Block
+from block import Block, CaptureZone
+from lidar import Lidar, generate_lidars
+from tools import log
+
+from config_neural_loader import config_neural
 #config = Config()
 #print("config = Config()")
-
+ic.configureOutput(prefix=f'{debug} | ', includeContext=True)
 
 #tanks_images = [pygame.image.load(os.path.join(config.images_dir, "tanks", img)) for img in os.listdir(os.path.join(config.images_dir, "tanks"))]  # [pygame.image.load(f'images/tanks/tank_{i}.png').convert() for i in range(1, os.listdir())]
 #print("tanks_images")
@@ -55,11 +62,17 @@ class Tank:
         self.distance = 0
         self.side_obj = 0
         self.capture_zone = None
+        self.capture_zone_distance = 0
+        self.capture_zone_side = 0
+
         self.flag_collide_bullet_zone = True
         self.bullet_reward_zone = None
         self.bullet = None
+        self.flag_reward_capture_zone = False
 
         self.reward = 0
+
+        self.size_data = 0
 
         self.time_alive_tank = 5
         self.tick_gun = 0
@@ -95,6 +108,10 @@ class Tank:
             "up": 0,
             "down": 180
         }
+
+
+
+        self.side = "up"
         #print(f"left: {self.keyLEFT}")
         '''left 
         right
@@ -104,6 +121,10 @@ class Tank:
         right_degree = 270
         up_degree = 0
         down_degree = 180'''
+
+        if config_neural.AGENT.input_type == config_neural.LIDAR.name:
+
+            generate_lidars(self.screen, self, config_neural.LIDAR.level, config_neural.LIDAR.distance, config_neural.LIDAR.start_angle, mirrored=config_neural.LIDAR.mirrored)
 
     def rotate(self, side):
 
@@ -157,16 +178,41 @@ class Tank:
 
 
 
-    def get_data(self, capture_zone):
+
+
+
+
+    def get_data(self, data=None, capture_zone=None, distance_bullet=0):
         #import torch.nn.functional as F
-        from bullet import Bullet
+        #from bullet import Bullet
         #return int(self.distance / 30)
         #print(bool(len(Bullet.bullets)))
-        return  [self.side_obj / 180 , self.sides[self.side_tank]/270, bool(Bullet.bullets), 0]#, self.sides[self.side_tank]
+        #log(distance_bullet)
+
+
+        if config_neural.AGENT.input_type == config_neural.NEAREST_TARGET_VALUE.name:
+            if config_neural.NEAREST_TARGET_VALUE.type == config_neural.NEAREST_TARGET_VALUE.angle_and_distance:
+                data = [self.capture_zone_side / 180, min(1200, self.capture_zone_distance) / 1200]
+            elif config_neural.NEAREST_TARGET_VALUE.type == config_neural.NEAREST_TARGET_VALUE.two_points:
+                data = [self.rect.center[0]/1200, self.rect.center[1]/800, capture_zone.rect.center[0]/1200, capture_zone.rect.center[1]/800]
+        '''elif config_neural.AGENT.input_type == config_neural.LIDAR.name:
+            data'''
+
+
+
+
+        self.size_data = len(data)
+        data_local = data.copy()
+        data_local += [self.side_tank=="up",  self.side_tank=="down",  self.side_tank=="left",  self.side_tank=="right"] #self.side_obj / 180, [self.sides[self.side_tank]/270]
+        data_local += [self.capture_zone_side / 180, min(1200, self.capture_zone_distance) / 1200]
+        #data_local += [self.rect.center[0]/1200, self.rect.center[1]/800, capture_zone.rect.center[0]/1200, capture_zone.rect.center[1]/800]
+
+        return data_local                    #, self.sides[self.side_tank]/270, distance_bullet #, self.sides[self.side_tank]
                                                 #[self.rect.center[0], self.rect.center[1], capture_zone.rect.center[0], capture_zone.rect.center[1]]
                                                 #[self.rect.center[0]/1200, self.rect.center[1]/800, capture_zone.rect.center[0]/1200, capture_zone.rect.center[1]/800]
                                                 #[self.rect.center[0], self.rect.center[1], capture_zone.rect.center[0], capture_zone.rect.center[1]]
                                                 #[self.side_obj, self.distance],
+                                                #[self.side_obj / 180, min(1200, self.distance) / 1200]
                                                 #[self.side_obj, min(1000, self.distance)]
                                                 #[self.side_obj / 180, self.sides[self.side_tank]/270,  min(1200, self.distance) / 1200]
                                                 #[self.side_obj / 180,  min(1200, self.distance) / 1200,  self.side_tank=="up",  self.side_tank=="down",  self.side_tank=="left",  self.side_tank=="right"]
@@ -176,27 +222,36 @@ class Tank:
 
         #sec_tick = ticks//1000
         #lolcal_sec = 0
+
+        base_keys = [0] * 5
+        base_keys[:len(keys)] = keys
+
+        #ic("==========")
+        #ic(keys)
+        #print(f"{keys=}")
+        #print(f"{base_keys=}")
+
         oldX, oldY = self.rect.topleft
-        side = None
+
         if keys[self.keyLEFT]:
-            side = "left"
+            self.side = "left"
             self.rect.x -= self.speed
         elif keys[self.keyRIGHT]:
-            side = "right"
+            self.side = "right"
             self.rect.x += self.speed
         elif keys[self.keyUP]:
-            side = "up"
+            self.side = "up"
             self.rect.y -= self.speed
         elif keys[self.keyDOWN]:
-            side = "down"
+            self.side = "down"
             self.rect.y += self.speed
 
-        if keys[self.keySHOT]:
+        if base_keys[self.keySHOT]:
             self.tick_gun += 1
             #print(self.tick_gun)
 
 
-        if keys[self.keySHOT] and self.flag_bullet_spawn:#self.flag_bullet_spawn #self.tick_gun%10==0
+        if base_keys[self.keySHOT] and self.flag_bullet_spawn:#self.flag_bullet_spawn #self.tick_gun%10==0
             self.gun()
             self.flag_bullet_spawn = True
             #self.tick_gun += 1
@@ -204,9 +259,10 @@ class Tank:
             self.flag_bullet_spawn = True'''
 
         # self.gun()
-        self.rotate(side)
+        self.rotate(self.side)
 
         objects = Tank.tanks+Block.blocks
+        self.list_of_zone = {}
         for object in objects:
             if self != object and self.rect.colliderect(object.rect) and object.type == "tank":
                 #self.rect.x, self.rect.y = oldX, oldY
@@ -222,19 +278,32 @@ class Tank:
                 #self.rect.x, self.rect.y = -self.speed, -self.speed
             if object.type == "wall" and self.rect.colliderect(object.rect):
                 self.rect.x, self.rect.y = oldX, oldY
+
                 #self.rect.x, self.rect.y = -self.speed, -self.speed
             if object.type == "capture_zone":
+
+                #print(self.side_obj)
                 self.distance = self.compute_distance(object)
                 self.side_obj = self.compute_side(object)
-                #print(self.side_obj)
-                self.capture_zone = object
+
+                self.list_of_zone[self.distance] = object
+
+
+
                 #side = [s[0] for s in self.sides.items() if s[1] == self.side_obj]
 
                 if self.rect.colliderect(object.rect):
                     object.collide()
-                    self.reward = CAPTURE_ZONE_FIT
+
+                    #self.rect.x = BG_SIZE[0] * 0.5
+                    #self.rect.y =  BG_SIZE[1] * 0.5
+
+                    self.reward += CAPTURE_ZONE_FIT
                     self.score += 1
                     self.flag_timer_reward = True
+                    self.flag_reward_capture_zone = True
+
+
 
                     #timer_alive += 1
 
@@ -276,6 +345,9 @@ class Tank:
             elif event.key == pygame.K_RIGHT:
                 self._rotate("right")
                 self.rect.x += self.speed'''
+        self.capture_zone = self.list_of_zone[min(self.list_of_zone.keys())]
+        self.capture_zone_distance = self.compute_distance(self.capture_zone)
+        self.capture_zone_side = self.compute_side(self.capture_zone)
 
     def draw(self):
         self.screen.blit(self.tank, self.rect)

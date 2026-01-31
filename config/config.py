@@ -37,7 +37,7 @@ class Config:
 
     def _get_dir_project(self):
         current_path = self.base_dir
-        while True:
+        while True: #опасненько
             if os.path.basename(current_path) == project_dir:
                 return current_path
             current_path = os.path.dirname(current_path)
