@@ -1,8 +1,5 @@
 from collections import deque
-#from random import random
 import random
-
-from icecream import ic
 
 from config_game import MAX_MEMORY, BATCH_SIZE, LR, device, flag_train_gun
 from config_neural_loader import config_neural

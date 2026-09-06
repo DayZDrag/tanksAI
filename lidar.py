@@ -1,7 +1,6 @@
 import math
 
 import pygame
-from icecream import ic
 
 from block import Wall, CaptureZone
 from config_game import GREEN_COLOR, DARKENED_GREEN_COLOR, RED_COLOR, BG_SIZE, bg_rect

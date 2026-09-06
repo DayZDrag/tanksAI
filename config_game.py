@@ -6,8 +6,8 @@ import os
 import shutil
 
 from icecream import ic
-
-experiment = "lidar_sensor_test_199"
+#lidar_sensor_test_199
+experiment = "test_1"
 model_folder_path = 'saves'
 model_saves_path = "saves"
 

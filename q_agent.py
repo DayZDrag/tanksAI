@@ -1,22 +1,12 @@
 import os
 import sys
 from datetime import datetime
-from pprint import pprint
 
-import numpy as np
 import pygame
 import torch
-import random
-#import numpy as np
-from collections import deque
 
-from PIL.FontFile import WIDTH
 from matplotlib import pyplot as plt
-from pygame.examples.moveit import HEIGHT
-from pyinstrument import Profiler
-from sympy.codegen import Print
 
-import config.config
 from agent import Agent
 from block import CaptureZone, Block, Wall
 from bullet import Bullet
@@ -32,22 +22,17 @@ from grid_sensor import GridSensor
 
 from image_loader import image_loader
 from lidar import Lidar
-from model_q_torch import QNetworkTorch, QTrainer
-#from plot import plot
-#import plot
+from model_q_torch import QNetworkTorch
+
 from tank import Tank
-from text import Text, Point
-#import os
-import torch.nn.functional as F
+from text import Text
+
 from icecream import ic
 
-from tools import ocurat_print, log
 from config_neural_loader import config_neural
 
 from config_game import device
-import shutil
 import json
-
 
 ic.configureOutput(prefix=f'{prefix} | ', includeContext=flag_debug)
 

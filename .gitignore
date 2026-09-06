@@ -1,0 +1,16 @@
+# Python caches and IDE settings
+__pycache__/
+*.py[cod]
+.idea/
+
+# Local builds and generated executables
+build/
+dist/
+*.exe
+
+# Training runs and checkpoints (keep the tracked placeholder)
+saves/*
+!saves/.gitkeep
+
+# Local environment helper
+venv_tanksAI.bat

@@ -1,19 +1,16 @@
 import math
 
 from icecream import ic
-#from pygments.styles.rainbow_dash import GREEN
 
 from image_loader import image_loader
-#from random import random, randint
+
 import pygame
-import os
-#from block import Block
-from config.config import Config
+
 from config_game import DEATH_FIT, CAPTURE_ZONE_FIT, BG_SIZE, GREEN_COLOR, debug, DARKENED_GREEN_COLOR
-#from text import Text
+
 from block import Block, CaptureZone
 from lidar import Lidar, generate_lidars
-from tools import log
+
 
 from config_neural_loader import config_neural
 #config = Config()

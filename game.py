@@ -1,23 +1,21 @@
 from icecream import ic
-import os
 
 from grid_sensor import GridSensor
 from image_loader import image_loader
 
-#from image_loader import image_loader
-#print("image_loader")
 import sys
 from random import choice
 import pygame
 from block import Block, CaptureZone, Wall
 from bullet import Bullet
-#from config.config import Config
+
 from config_game import bg_color, target_fps, BG_SIZE
 from config_neural_loader import config_neural
 from lidar import Lidar
 from tank import Tank
 from text import Text
 from tools import filter_tanks_name
+
 #os.environ["SDL_VIDEODRIVER"] = "dummy"
 pygame.init()
 #config = Config()

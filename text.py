@@ -1,5 +1,4 @@
 import pygame
-from config_game import BG_SIZE
 
 #screen = pygame.display.set_mode(BG_SIZE)
 class Text:

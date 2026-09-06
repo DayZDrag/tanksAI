@@ -1,6 +1,3 @@
-from typing import Callable, Any
-
-#from tank import Tank
 import inspect
 
 filter_tanks_name = lambda name, tanks: not [True for tank in tanks if tank.name == name]
